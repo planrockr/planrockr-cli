@@ -64,7 +64,7 @@ Move the planrockr-cli binary to somewhere in your path. For example:
 
 Alternatively, if you have a Go environment configured, you can install the development version of planrockr-cli from the command line like so:
 
-	go get github.com/digitalocean/doctl/cmd/doctl
+	go get github.com/planrockr/planrockr-cli/cmd/planrockr-cli
 
 ### Option 4 – Build with Docker
 
