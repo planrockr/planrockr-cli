@@ -22,21 +22,21 @@ Use "planrockr-cli [command] --help" for more information about a command.
 
 ### Option 1 - Use a Package Manager (preferred method)
 
-MacOS
+*MacOS*
 
 You can use Homebrew to install planrockr-cli on Mac OS X by using the command below:
 
 	brew install planrockr-cli
 
-GNU/Linux
+*GNU/Linux*
 
-Integrations with package managers for GNU/Linux
+Integrations with package managers for GNU/Linux are to come.
 
 ### Option 2 – Download a Release from GitHub
 
 Visit the Releases page for the planrockr-cli GitHub project, and find the appropriate archive for your operating system and architecture. (For MacOS systems, remember to use the darwin archive.)
 
-MacOS and GNU/Linux
+*MacOS* and *GNU/Linux*
 
 You can download the archive from your browser, or copy its URL and retrieve it to your home directory with wget or curl:	
 
@@ -96,4 +96,4 @@ A new project will be created on Planrockr and a Webhook will be created on Jira
 
 	planrockr-cli import -t gitlab -h http://your_gitlab_host -u gitlab_user -p gitlab_password
 
-A new project will be created on Planrockr and a Webhook will be created on Gitlab. This Gitlab user must have permissions to create a new Webhook.
+A new project will be created on Planrockr and a *Webhook* will be created on Gitlab. This Gitlab user must have permissions to create a new *Webhook*.
