@@ -84,15 +84,15 @@ If you have Docker installed, you can build with the Dockerfile a Docker image a
 
 	planrockr-cli login -u email@email.com -p password
 
-The login command will create a file in ~/.planrockr/config.yml with your token. This token will be used in your future commands.
+The login command will create a file in ~/.planrockr/config.yml with your token. This token will be used in your future commands. If you omit the -u and -p parameters you will be asked to provide the username and password right after the command is executed.
 
-**Import a Jira projet**
+**Import a Jira project**
 
 	planrockr-cli import -t jira -h http://your_jira_host -u jira_user -p jira_password
 
-A new project will be created on Planrockr and a Webhook will be created on Jira. This Jira user must have permissions to create a new Webhook.
+A new project will be created on Planrockr and a Webhook will be created on Jira. This Jira user must have permissions to create a new Webhook. If you omit the -u and -p parameters you will be asked to provide the username and password right after the command is executed.
 
-**Import a Gitlab projet**
+**Import a Gitlab project**
 
 	planrockr-cli import -t gitlab -h http://your_gitlab_host -u gitlab_user -p gitlab_password
 
