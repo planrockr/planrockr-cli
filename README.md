@@ -1,5 +1,7 @@
 # Planrockr CLI 
 
+[![Build Status](https://travis-ci.org/planrockr/planrockr-cli.svg?branch=master)](https://travis-ci.org/planrockr/planrockr-cli)
+
 ```
 planrockr-cli is a command line interface for the Planrockr API.
 
