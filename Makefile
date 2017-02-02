@@ -1,7 +1,6 @@
 all: dependencies build
 
 clean:
-	rm -rf src/planrockr/vendor
 	rm -rf bin
 
 dependencies:
@@ -11,4 +10,4 @@ dependencies:
 	cd ./src/planrockr/cmd && go install -v
 
 build:
-	go build -o bin/planrockr-cli src/planrockr/cmd/main.go
+	go build -o bin/planrockr-cli cmd/main.go
