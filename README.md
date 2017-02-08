@@ -14,7 +14,7 @@ Available Commands:
   version     show the current version
 
 Flags:
-  -h, --help                  help for doctl
+  -h, --help                  help for planrockr-cli
   -v, --verbose               verbose output
 
 Use "planrockr-cli [command] --help" for more information about a command.
@@ -82,11 +82,11 @@ If you have Docker installed, you can build with the Dockerfile a Docker image a
 
 ## Examples
 
-**Login**
+**Auth**
 
-	planrockr-cli login -u email@email.com -p password
+	planrockr-cli auth -u email@email.com -p password
 
-The login command will create a file in ~/.planrockr/config.yml with your token. This token will be used in your future commands. If you omit the -u and -p parameters you will be asked to provide the username and password right after the command is executed.
+The auth command will create a file in ~/.planrockr/config.yml with your token. This token will be used in your future commands. If you omit the -u and -p parameters you will be asked to provide the username and password right after the command is executed.
 
 **Import a Jira project**
 
