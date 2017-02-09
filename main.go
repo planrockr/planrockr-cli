@@ -15,14 +15,14 @@
 package main
 
 import (
-    "os"
-    "fmt"
-    "github.com/planrockr/planrockr-cli/cmd"
+	"fmt"
+	"github.com/planrockr/planrockr-cli/cmd"
+	"os"
 )
 
 func main() {
-    if err := cmd.RootCmd.Execute(); err != nil {
-        fmt.Println(err)
-        os.Exit(-1)
-    }
+	if err := cmd.RootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
 }

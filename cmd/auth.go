@@ -15,23 +15,24 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
-	"strings"
-	"net/http"
 	"github.com/spf13/cobra"
 	"io/ioutil"
-	"errors"
+	"net/http"
+	"strings"
 )
 
 var (
-	user string
+	user     string
 	password string
 )
+
 // authCmd represents the auth command
 var authCmd = &cobra.Command{
 	Use:   "auth",
 	Short: "auth commands",
-	Long: "You need to use the e-mail and password that you use to log in http://planrockr.com",
+	Long:  "You need to use the e-mail and password that you use to log in http://planrockr.com",
 	Run: func(cmd *cobra.Command, args []string) {
 		token, err := doLogin(user, password)
 		if err != nil {
@@ -40,7 +41,6 @@ var authCmd = &cobra.Command{
 		//@todo: save on ~/.planrockr-cli.yaml
 		fmt.Printf("%s", token)
 	},
-
 }
 
 func doLogin(user string, password string) (token string, err error) {
@@ -54,6 +54,9 @@ func doLogin(user string, password string) (token string, err error) {
 	req.Header.Set("Origin", "planrockr-cli")
 
 	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
 	defer resp.Body.Close()
 	if err != nil || resp.Status == "404 Not Found" {
 		return "", errors.New("Invalid credentials")
