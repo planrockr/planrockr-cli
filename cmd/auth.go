@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"github.com/planrockr/planrockr-cli/config"
 )
 
 var (
@@ -62,6 +63,13 @@ func doLogin(user string, password string) (token string, err error) {
 		return "", errors.New("Invalid credentials")
 	}
 	buf, _ := ioutil.ReadAll(resp.Body)
+
+	err = config.Init()
+	if err != nil {
+		panic(err)
+		// return "", errors.New("Error reading config file")
+	}
+	config.Set("auth.token", string(buf))
 
 	return string(buf), nil
 }
