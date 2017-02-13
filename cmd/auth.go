@@ -64,12 +64,10 @@ func doLogin(user string, password string) (token string, err error) {
 	}
 	buf, _ := ioutil.ReadAll(resp.Body)
 
-	err = config.Init()
-	if err != nil {
-		panic(err)
-		// return "", errors.New("Error reading config file")
+	err = config.Set("auth.token", string(buf))
+	if (err != nil) {
+		return "", errors.New("Error writing config file")
 	}
-	config.Set("auth.token", string(buf))
 
 	return string(buf), nil
 }

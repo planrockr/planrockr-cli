@@ -66,17 +66,12 @@ func TestInitWithEnviromentVariables(t *testing.T) {
 func TestSaveWithOutConfigFile(t *testing.T) {
 	viper.SetConfigName("config_not_found")
 	viper.AddConfigPath("/tmp")
-	err := viper.ReadInConfig() // Find and read the config file
-	// err := Init()
+	err := Set("auth.token", "teste")
 	if err != nil {
 		t.Error(err)
 	}
-	Set("auth.token", "teste")
-	err = viper.ReadInConfig() // Find and read the config file
-	if err != nil {
-		t.Error(err)
-	}
+	viper.ReadInConfig() // Find and read the config file
 	var config Config
-	err = viper.Unmarshal(&config)
-	assert.EqualValues(t, "teste", config.Auth.Token, "Config get wrong value for auth.token")
+	viper.Unmarshal(&config)
+		assert.EqualValues(t, "teste", config.Auth.Token, "Config get wrong value for auth.token")
 }

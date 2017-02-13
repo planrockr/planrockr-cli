@@ -10,8 +10,6 @@ import (
 	"os"
 )
 
-
-
 type Config struct {
 	Auth       struct {
 		Token     string
@@ -48,9 +46,9 @@ func Get() Config {
 	return config
 }
 
-func Set(key string, value string) {
+func Set(key string, value string) error {
 	viper.Set(key, value)
-	writeConfig()
+	return writeConfig()
 }
 
 func writeConfig() error {
