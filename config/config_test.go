@@ -58,8 +58,7 @@ func TestInitWithEnviromentVariables(t *testing.T) {
 	}
 	c := Get()
 	assert.EqualValues(t, "the refresh token", c.Auth.RefreshToken, "Config get wrong value for auth.refresh_token")
-	//@todo: está quebrando por um motivo que ainda não encontrei
-	// assert.EqualValues(t, "the token", c.Auth.Token, "Config get wrong value for auth.token")
+	assert.EqualValues(t, "the token", c.Auth.Token, "Config get wrong value for auth.token")
 	os.Clearenv()
 }
 
