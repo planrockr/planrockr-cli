@@ -3,9 +3,9 @@ package config
 import (
 	"testing"
 
-	"os"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"os"
 )
 
 func TestInitWithConfigFile(t *testing.T) {
@@ -39,7 +39,6 @@ func TestSaveToken(t *testing.T) {
 	assert.EqualValues(t, "teste", c.Auth.Token, "Config get wrong value for auth.token")
 	Set("auth.token", expectedToken)
 }
-
 
 func TestInitWithEnviromentVariables(t *testing.T) {
 	err := os.Setenv("PLANROCKR_AUTH_TOKEN", "the token")

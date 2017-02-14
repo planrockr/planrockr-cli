@@ -3,24 +3,23 @@ package config
 import (
 	"strings"
 
+	"errors"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
-	"errors"
 	"io"
 	"os"
 )
 
 type Config struct {
-	Auth       struct {
-		Token     string
-		RefreshToken     string
+	Auth struct {
+		Token        string
+		RefreshToken string
 	}
 }
 
-
 type Params struct {
-  configName string
-  configPath string
+	configName string
+	configPath string
 }
 
 var config Config
@@ -29,7 +28,7 @@ var defaultParams = Params{".planrockr-cli", ""}
 
 // Init will initilize the Config struct using one file or enviroment variables.
 func Init() error {
-	if (defaultParams.configPath == "") {
+	if defaultParams.configPath == "" {
 		defaultParams.configPath = os.Getenv("HOME")
 	}
 	var _, err = os.Stat(defaultParams.configPath + "/" + defaultParams.configName + ".yaml")
@@ -56,7 +55,7 @@ func Init() error {
 	return err
 }
 
-func SetParameters(params Params)  {
+func SetParameters(params Params) {
 	defaultParams = params
 }
 

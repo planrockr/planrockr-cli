@@ -15,14 +15,14 @@
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/planrockr/planrockr-cli/config"
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"github.com/planrockr/planrockr-cli/config"
-	"encoding/json"
 )
 
 var (
@@ -66,12 +66,12 @@ func doLogin(user string, password string) (token string, err error) {
 	buf, _ := ioutil.ReadAll(resp.Body)
 
 	err = config.Init()
-	if (err != nil) {
+	if err != nil {
 		return "", errors.New("Error reading config file")
 	}
 
 	type AuthData struct {
-		Token  string
+		Token         string
 		Refresh_Token string
 	}
 	var authData AuthData
@@ -81,7 +81,7 @@ func doLogin(user string, password string) (token string, err error) {
 	}
 	err = config.Set("auth.token", authData.Token)
 	err = config.Set("auth.refreshtoken", authData.Refresh_Token)
-	if (err != nil) {
+	if err != nil {
 		return "", errors.New("Error writing config file")
 	}
 
