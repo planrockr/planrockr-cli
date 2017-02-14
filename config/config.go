@@ -17,14 +17,33 @@ type Config struct {
 	}
 }
 
+
+type Params struct {
+  configName string
+  configPath string
+}
+
 var config Config
+
+var defaultParams = Params{".planrockr-cli", ""}
 
 // Init will initilize the Config struct using one file or enviroment variables.
 func Init() error {
-	viper.SetConfigName("config")
-	viper.AddConfigPath("$HOME/.planrockr-cli/")
-	viper.AddConfigPath(".")
-	err := viper.ReadInConfig() // Find and read the config file
+	if (defaultParams.configPath == "") {
+		defaultParams.configPath = os.Getenv("HOME")
+	}
+	var _, err = os.Stat(defaultParams.configPath + "/" + defaultParams.configName + ".yaml")
+	if os.IsNotExist(err) {
+		var file, err = os.Create(defaultParams.configPath + "/" + defaultParams.configName + ".yaml")
+		if err != nil {
+			return err
+		}
+		file.Close()
+	}
+
+	viper.SetConfigName(defaultParams.configName)
+	viper.AddConfigPath(defaultParams.configPath)
+	err = viper.ReadInConfig() // Find and read the config file
 	if err != nil {
 		return err
 	}
@@ -33,12 +52,12 @@ func Init() error {
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	err = viper.Unmarshal(&config)
-	// _, err = configFileWriter()
-	// if err != nil {
-		// panic(err)
-	// }
 
 	return err
+}
+
+func SetParameters(params Params)  {
+	defaultParams = params
 }
 
 // Get will return the config initialized.

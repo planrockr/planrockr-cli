@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"strings"
 	"github.com/planrockr/planrockr-cli/config"
+	"encoding/json"
 )
 
 var (
@@ -64,12 +65,27 @@ func doLogin(user string, password string) (token string, err error) {
 	}
 	buf, _ := ioutil.ReadAll(resp.Body)
 
-	err = config.Set("auth.token", string(buf))
+	err = config.Init()
+	if (err != nil) {
+		return "", errors.New("Error reading config file")
+	}
+
+	type AuthData struct {
+		Token  string
+		Refresh_Token string
+	}
+	var authData AuthData
+	err = json.Unmarshal(buf, &authData)
+	if err != nil {
+		return "", errors.New("Error parsing authorization data")
+	}
+	err = config.Set("auth.token", authData.Token)
+	err = config.Set("auth.refreshtoken", authData.Refresh_Token)
 	if (err != nil) {
 		return "", errors.New("Error writing config file")
 	}
 
-	return string(buf), nil
+	return "Authorized\n", nil
 }
 
 func init() {
