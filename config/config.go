@@ -3,25 +3,46 @@ package config
 import (
 	"strings"
 
+	"errors"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
+	"io"
+	"os"
 )
 
 type Config struct {
-	Auth       struct {
-		Token     string
-		RefreshToken     string
+	Auth struct {
+		Token        string
+		RefreshToken string
 	}
+}
+
+type Params struct {
+	configName string
+	configPath string
 }
 
 var config Config
 
+var defaultParams = Params{".planrockr-cli", ""}
+
 // Init will initilize the Config struct using one file or enviroment variables.
 func Init() error {
-	viper.SetConfigName("config")
-	viper.AddConfigPath("/etc/planrockr-cli/")
-	viper.AddConfigPath("$HOME/.planrockr-cli/")
-	viper.AddConfigPath(".")
-	err := viper.ReadInConfig() // Find and read the config file
+	if defaultParams.configPath == "" {
+		defaultParams.configPath = os.Getenv("HOME")
+	}
+	var _, err = os.Stat(defaultParams.configPath + "/" + defaultParams.configName + ".yaml")
+	if os.IsNotExist(err) {
+		var file, err = os.Create(defaultParams.configPath + "/" + defaultParams.configName + ".yaml")
+		if err != nil {
+			return err
+		}
+		file.Close()
+	}
+
+	viper.SetConfigName(defaultParams.configName)
+	viper.AddConfigPath(defaultParams.configPath)
+	err = viper.ReadInConfig() // Find and read the config file
 	if err != nil {
 		return err
 	}
@@ -30,10 +51,54 @@ func Init() error {
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	err = viper.Unmarshal(&config)
+
 	return err
+}
+
+func SetParameters(params Params) {
+	defaultParams = params
 }
 
 // Get will return the config initialized.
 func Get() Config {
 	return config
+}
+
+func Set(key string, value string) error {
+	viper.Set(key, value)
+	return writeConfig()
+}
+
+func writeConfig() error {
+	f, err := configFileWriter()
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	b, err := yaml.Marshal(viper.AllSettings())
+	if err != nil {
+		return errors.New("unable to encode configuration to YAML format")
+	}
+
+	_, err = f.Write(b)
+	if err != nil {
+		return errors.New("unable to write configuration")
+	}
+
+	return nil
+}
+
+func configFileWriter() (io.WriteCloser, error) {
+	cfgFile := viper.ConfigFileUsed()
+	f, err := os.Create(cfgFile)
+	if err != nil {
+		return nil, err
+	}
+	if err := os.Chmod(cfgFile, 0600); err != nil {
+		return nil, err
+	}
+
+	return f, nil
 }

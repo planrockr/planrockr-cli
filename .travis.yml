@@ -4,3 +4,5 @@ go:
 sudo: false
 install: true
 script: make test
+after_success:
+  - CI=1 make cover; bash <(curl -s https://codecov.io/bash)

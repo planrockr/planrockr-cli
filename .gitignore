@@ -2,3 +2,4 @@ bin
 pkg
 /.GOPATH
 /bin
+coverage.txt
