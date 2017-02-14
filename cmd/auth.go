@@ -36,20 +36,18 @@ var authCmd = &cobra.Command{
 	Short: "auth commands",
 	Long:  "You need to use the e-mail and password that you use to log in http://planrockr.com",
 	Run: func(cmd *cobra.Command, args []string) {
-		token, err := doLogin(user, password)
+		err := doLogin(user, password)
 		if err != nil {
 			fmt.Println(err)
 		}
-		//@todo: save on ~/.planrockr-cli.yaml
-		fmt.Printf("%s", token)
 	},
 }
 
-func doLogin(user string, password string) (token string, err error) {
+func doLogin(user string, password string) error {
 	body := strings.NewReader("parameters%5Blogin%5D=" + user + "&parameters%5Bpassword%5D=" + password)
 	req, err := http.NewRequest("POST", "https://app.planrockr.com/rpc/v1/authentication/login", body)
 	if err != nil {
-		return "", err
+		return err
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -57,17 +55,17 @@ func doLogin(user string, password string) (token string, err error) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer resp.Body.Close()
 	if err != nil || resp.Status == "404 Not Found" {
-		return "", errors.New("Invalid credentials")
+		return errors.New("Invalid credentials")
 	}
 	buf, _ := ioutil.ReadAll(resp.Body)
 
 	err = config.Init()
 	if err != nil {
-		return "", errors.New("Error reading config file")
+		return errors.New("Error reading config file")
 	}
 
 	type AuthData struct {
@@ -77,15 +75,17 @@ func doLogin(user string, password string) (token string, err error) {
 	var authData AuthData
 	err = json.Unmarshal(buf, &authData)
 	if err != nil {
-		return "", errors.New("Error parsing authorization data")
+		return errors.New("Error parsing authorization data")
 	}
 	err = config.Set("auth.token", authData.Token)
 	err = config.Set("auth.refreshtoken", authData.Refresh_Token)
 	if err != nil {
-		return "", errors.New("Error writing config file")
+		return errors.New("Error writing config file")
 	}
 
-	return "Authorized\n", nil
+	fmt.Println("Authorized")
+
+	return nil
 }
 
 func init() {
