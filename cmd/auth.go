@@ -43,6 +43,10 @@ var authCmd = &cobra.Command{
 	},
 }
 
+var getDefaultClient = func(req *http.Request) (*http.Response, error) {
+	return http.DefaultClient.Do(req)
+}
+
 func doLogin(user string, password string) error {
 	body := strings.NewReader("parameters%5Blogin%5D=" + user + "&parameters%5Bpassword%5D=" + password)
 	req, err := http.NewRequest("POST", "https://app.planrockr.com/rpc/v1/authentication/login", body)
@@ -53,12 +57,12 @@ func doLogin(user string, password string) error {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Origin", "planrockr-cli")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := getDefaultClient(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-	if err != nil || resp.Status == "404 Not Found" {
+	if err != nil || resp.StatusCode == http.StatusNotFound {
 		return errors.New("Invalid credentials")
 	}
 	buf, _ := ioutil.ReadAll(resp.Body)
