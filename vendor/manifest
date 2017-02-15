@@ -2,6 +2,22 @@
 	"version": 0,
 	"dependencies": [
 		{
+			"importpath": "github.com/Sirupsen/logrus",
+			"repository": "https://github.com/Sirupsen/logrus",
+			"vcs": "git",
+			"revision": "7f4b1adc791766938c29457bed0703fb9134421a",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/andygrunwald/go-jira",
+			"repository": "https://github.com/andygrunwald/go-jira",
+			"vcs": "git",
+			"revision": "3a142b6278edca7d9d52de0bfdcd300d78230b5d",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/armon/consul-api",
 			"repository": "https://github.com/armon/consul-api",
 			"vcs": "git",
@@ -46,11 +62,28 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/fatih/structs",
+			"repository": "https://github.com/fatih/structs",
+			"vcs": "git",
+			"revision": "a720dfa8df582c51dee1b36feabb906bde1588bd",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/fsnotify/fsnotify",
 			"repository": "https://github.com/fsnotify/fsnotify",
 			"vcs": "git",
 			"revision": "a904159b9206978bb6d53fcc7a769e5cd726c737",
 			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/google/go-querystring/query",
+			"repository": "https://github.com/google/go-querystring",
+			"vcs": "git",
+			"revision": "53e6ce116135b80d037921a7fdd5138cf32d7a8a",
+			"branch": "master",
+			"path": "/query",
 			"notests": true
 		},
 		{
@@ -198,6 +231,15 @@
 			"revision": "4d4bfba8f1d1027c4fdbe371823030df51419987",
 			"branch": "master",
 			"path": "vendor/github.com/pmezard/go-difflib/difflib",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/trivago/tgo/tcontainer",
+			"repository": "https://github.com/trivago/tgo",
+			"vcs": "git",
+			"revision": "4c3f9107de3094290a13bc02fd11a3c71a268643",
+			"branch": "master",
+			"path": "/tcontainer",
 			"notests": true
 		},
 		{
@@ -386,6 +428,22 @@
 			"revision": "19c96be7c450e3dff3797cb1e458414c15010358",
 			"branch": "master",
 			"path": "imports",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/airbrake/gobrake.v2",
+			"repository": "https://gopkg.in/airbrake/gobrake.v2",
+			"vcs": "git",
+			"revision": "668876711219e8b0206e2994bf0a59d889c775aa",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/gemnasium/logrus-airbrake-hook.v2",
+			"repository": "https://gopkg.in/gemnasium/logrus-airbrake-hook.v2",
+			"vcs": "git",
+			"revision": "bfee1239d796830ca346767650cce5ba90d58c57",
+			"branch": "master",
 			"notests": true
 		},
 		{

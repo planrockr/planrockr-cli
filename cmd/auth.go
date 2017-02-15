@@ -26,8 +26,8 @@ import (
 )
 
 var (
-	user     string
-	password string
+	authUser     string
+	authPassword string
 )
 
 // authCmd represents the auth command
@@ -36,15 +36,11 @@ var authCmd = &cobra.Command{
 	Short: "auth commands",
 	Long:  "You need to use the e-mail and password that you use to log in http://planrockr.com",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := doLogin(user, password)
+		err := doLogin(authUser, authPassword)
 		if err != nil {
 			fmt.Println(err)
 		}
 	},
-}
-
-var getDefaultClient = func(req *http.Request) (*http.Response, error) {
-	return http.DefaultClient.Do(req)
 }
 
 func doLogin(user string, password string) error {
@@ -95,7 +91,6 @@ func doLogin(user string, password string) error {
 func init() {
 	RootCmd.AddCommand(authCmd)
 
-	authCmd.Flags().StringVarP(&user, "user", "u", "", "User e-mail")
-	authCmd.Flags().StringVarP(&password, "password", "p", "", "User password")
-
+	authCmd.Flags().StringVarP(&authUser, "user", "u", "", "User e-mail")
+	authCmd.Flags().StringVarP(&authPassword, "password", "p", "", "User password")
 }
