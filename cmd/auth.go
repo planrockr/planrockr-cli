@@ -18,11 +18,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/planrockr/planrockr-cli/config"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/planrockr/planrockr-cli/config"
+	"github.com/spf13/cobra"
 )
 
 var (

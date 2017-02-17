@@ -4,10 +4,11 @@ import (
 	"strings"
 
 	"errors"
-	"github.com/spf13/viper"
-	"gopkg.in/yaml.v2"
 	"io"
 	"os"
+
+	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
 )
 
 type Config struct {

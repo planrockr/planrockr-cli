@@ -3,9 +3,10 @@ package config
 import (
 	"testing"
 
+	"os"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"os"
 )
 
 func TestInitWithConfigFile(t *testing.T) {

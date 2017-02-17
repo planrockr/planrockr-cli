@@ -24,8 +24,8 @@ import (
 )
 
 var (
-	importType   string
-	importServer	 string
+	importType     string
+	importServer   string
 	importUser     string
 	importPassword string
 )
@@ -34,7 +34,7 @@ var (
 var importCmd = &cobra.Command{
 	Use:   "import",
 	Short: "import a project to Planrockr",
-	Long: "You can import a project from Jira or Gitlab",
+	Long:  "You can import a project from Jira or Gitlab",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		switch importType {

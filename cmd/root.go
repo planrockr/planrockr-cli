@@ -18,11 +18,12 @@ import (
 	"fmt"
 	"os"
 
+	"errors"
+	"net/http"
+
+	"github.com/planrockr/planrockr-cli/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"net/http"
-	"github.com/planrockr/planrockr-cli/config"
-	"errors"
 )
 
 var cfgFile string
@@ -99,7 +100,7 @@ func GetToken() (string, error) {
 // 		return nil, errors.New("Error reading config file")
 // 	}
 
-// 	return 
+// 	return
 // }
 
 var getDefaultClient = func(req *http.Request) (*http.Response, error) {
