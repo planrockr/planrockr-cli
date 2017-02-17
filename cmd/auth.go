@@ -45,8 +45,14 @@ var authCmd = &cobra.Command{
 }
 
 func doLogin(user string, password string) error {
+	errConfig := config.Init()
+	if errConfig != nil {
+		return errors.New("Error reading config file")
+	}
+	conf := config.Get()
+
 	body := strings.NewReader("parameters%5Blogin%5D=" + user + "&parameters%5Bpassword%5D=" + password)
-	req, err := http.NewRequest("POST", "https://app.planrockr.com/rpc/v1/authentication/login", body)
+	req, err := http.NewRequest("POST", conf.BaseUrl+"/rpc/v1/authentication/login", body)
 	if err != nil {
 		return err
 	}
@@ -63,11 +69,6 @@ func doLogin(user string, password string) error {
 		return errors.New("Invalid credentials")
 	}
 	buf, _ := ioutil.ReadAll(resp.Body)
-
-	err = config.Init()
-	if err != nil {
-		return errors.New("Error reading config file")
-	}
 
 	type AuthData struct {
 		Token         string

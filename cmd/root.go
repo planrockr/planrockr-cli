@@ -18,10 +18,8 @@ import (
 	"fmt"
 	"os"
 
-	"errors"
 	"net/http"
 
-	"github.com/planrockr/planrockr-cli/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -80,28 +78,6 @@ func initConfig() {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
 }
-
-func GetToken() (string, error) {
-	err := config.Init()
-	if err != nil {
-		return "", errors.New("Error reading config file")
-	}
-	c := config.Get()
-	if c.Auth.Token == "" {
-		return "", errors.New("Missing token")
-	}
-
-	return c.Auth.Token, nil
-}
-
-// var getConfig() = func() (*config, error) {
-// 	err = config.Init()
-// 	if err != nil {
-// 		return nil, errors.New("Error reading config file")
-// 	}
-
-// 	return
-// }
 
 var getDefaultClient = func(req *http.Request) (*http.Response, error) {
 	return http.DefaultClient.Do(req)

@@ -12,7 +12,8 @@ import (
 )
 
 type Config struct {
-	Auth struct {
+	BaseUrl string
+	Auth    struct {
 		Token        string
 		RefreshToken string
 	}
