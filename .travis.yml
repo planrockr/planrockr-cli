@@ -3,6 +3,6 @@ go:
   - 1.7
 sudo: false
 install: true
-script: make test
+script: make all ; make test
 after_success:
   - CI=1 make cover; bash <(curl -s https://codecov.io/bash)

@@ -17,10 +17,8 @@ package cmd
 import (
 	"fmt"
 
-	// "github.com/planrockr/planrockr-cli/config"
 	"github.com/planrockr/planrockr-cli/pkg"
 	"github.com/spf13/cobra"
-	// "net/http"
 )
 
 var (
