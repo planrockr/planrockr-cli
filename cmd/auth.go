@@ -52,9 +52,9 @@ func doLogin(user string, password string) error {
 	}
 	conf := config.Get()
 	q, err := url.ParseQuery("parameters[login]=" + user + "&parameters[password]=" + password)
-    if err != nil {
-        return err
-    }
+	if err != nil {
+		return err
+	}
 	body := strings.NewReader(q.Encode())
 	req, err := http.NewRequest("POST", conf.BaseUrl+"/rpc/v1/authentication/login", body)
 	if err != nil {
@@ -77,14 +77,22 @@ func doLogin(user string, password string) error {
 	type AuthData struct {
 		Token         string
 		Refresh_Token string
+		Id            int
 	}
 	var authData AuthData
 	err = json.Unmarshal(buf, &authData)
 	if err != nil {
 		return errors.New("Error parsing authorization data")
 	}
-	err = config.Set("auth.token", authData.Token)
-	err = config.Set("auth.refreshtoken", authData.Refresh_Token)
+	err = config.SetString("auth.token", authData.Token)
+	if err != nil {
+		return errors.New("Error writing config file")
+	}
+	err = config.SetString("auth.refreshtoken", authData.Refresh_Token)
+	if err != nil {
+		return errors.New("Error writing config file")
+	}
+	err = config.SetInt("auth.id", authData.Id)
 	if err != nil {
 		return errors.New("Error writing config file")
 	}

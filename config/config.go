@@ -16,6 +16,7 @@ type Config struct {
 	Auth    struct {
 		Token        string
 		RefreshToken string
+		Id           int
 	}
 }
 
@@ -66,7 +67,12 @@ func Get() Config {
 	return config
 }
 
-func Set(key string, value string) error {
+func SetString(key string, value string) error {
+	viper.Set(key, value)
+	return writeConfig()
+}
+
+func SetInt(key string, value int) error {
 	viper.Set(key, value)
 	return writeConfig()
 }
