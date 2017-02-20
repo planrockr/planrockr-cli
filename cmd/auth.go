@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/planrockr/planrockr-cli/config"
@@ -50,8 +51,11 @@ func doLogin(user string, password string) error {
 		return errors.New("Error reading config file")
 	}
 	conf := config.Get()
-
-	body := strings.NewReader("parameters%5Blogin%5D=" + user + "&parameters%5Bpassword%5D=" + password)
+	q, err := url.ParseQuery("parameters[login]=" + user + "&parameters[password]=" + password)
+    if err != nil {
+        return err
+    }
+	body := strings.NewReader(q.Encode())
 	req, err := http.NewRequest("POST", conf.BaseUrl+"/rpc/v1/authentication/login", body)
 	if err != nil {
 		return err

@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"net/url"
 
 	log "github.com/Sirupsen/logrus"
 	jiraApi "github.com/andygrunwald/go-jira"
@@ -105,7 +106,11 @@ func JiraImport(host string, user string, password string) error {
 		if err != nil {
 			fmt.Println(err)
 		}
-		//@todo: chamar /rpc/v1/project/addBoard
+		boardId := proj.ID + "_" + proj.Key
+		err = createBoard(conf.Auth.Token, conf.BaseUrl, strconv.Itoa(planrockrId), boardId, "3")
+		if err != nil {
+			fmt.Println(err)
+		}
 		wg.Add(1)
 		wLog := log.StandardLogger().WriterLevel(log.ErrorLevel)
 		defer wLog.Close()
@@ -121,7 +126,7 @@ func JiraImport(host string, user string, password string) error {
 	return nil
 }
 
-func createProject(token string, url string, name string) (int64, error) {
+func createProject(token string, url string, name string) (int, error) {
 	body := strings.NewReader("parameters%5Bname%5D=" + name)
 	req, err := http.NewRequest("POST", url+"/rpc/v1/project/create", body)
 	if err != nil {
@@ -137,27 +142,50 @@ func createProject(token string, url string, name string) (int64, error) {
 		return 0, err
 	}
 	defer resp.Body.Close()
-	if err != nil || resp.StatusCode != http.StatusOK {
-		return 0, err
-		// return 0, errors.New("Error creating project")
+	if err != nil || resp.StatusCode != http.StatusCreated {
+		return 0, errors.New("Error creating project")
 	}
 	buf, _ := ioutil.ReadAll(resp.Body)
 	type ProjectData struct {
-		Status string
-		Data   struct {
-			Project struct {
-				Id int64
-			}
+		Project struct {
+			Id int
 		}
 	}
 	var projectData ProjectData
 	err = json.Unmarshal(buf, &projectData)
 	if err != nil {
-		return 0, err
-		// return 0, errors.New("Error parsing project data")
+		return 0, errors.New("Error parsing project data")
 	}
 
-	return projectData.Data.Project.Id, nil
+	return projectData.Project.Id, nil
+}
+
+func createBoard(token string, server string, projId string, boardId string, boardType string) error  {
+	q, err := url.ParseQuery("parameters[projectId]=" + projId + "&parameters[boardId]=" + boardId + "&parameters[boardType]=" +boardType)
+    if err != nil {
+        return err
+    }
+	body := strings.NewReader(q.Encode())
+	req, err := http.NewRequest("POST", server+"/rpc/v1/project/addBoard", body)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Origin", "planrockr-cli")
+	req.Header.Set("Authorization-Coderockr", token)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if err != nil || resp.StatusCode != http.StatusCreated {
+		fmt.Println(resp.StatusCode)
+		return errors.New("Error creating board")
+	}
+
+	return nil
 }
 
 func GetProjects(i JiraImporter) (jiraApi.ProjectList, error) {
