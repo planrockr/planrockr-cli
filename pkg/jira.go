@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 	"net/url"
+	"bytes"
 
 	log "github.com/Sirupsen/logrus"
 	jiraApi "github.com/andygrunwald/go-jira"
@@ -61,14 +62,23 @@ type changelogItem struct {
 	To         string      `json:"to"`
 }
 
+type ProjectData struct {
+		Project struct {
+			Id int
+		}
+	}
+
+var projectData ProjectData
+var configData config.Config
+
 func JiraImport(host string, user string, password string) error {
 	err := config.Init()
 	if err != nil {
 		return errors.New("Error reading config file")
 	}
 
-	conf := config.Get()
-	if conf.Auth.Token == "" {
+	configData = config.Get()
+	if configData.Auth.Token == "" {
 		return errors.New("Missing token")
 	}
 
@@ -101,13 +111,12 @@ func JiraImport(host string, user string, password string) error {
 			continue
 		}
 		pName := proj.Name
-		planrockrId, err := createProject(conf.Auth.Token, conf.BaseUrl, pName)
-		fmt.Println(planrockrId)
+		err = createProject(pName)
 		if err != nil {
 			fmt.Println(err)
 		}
 		boardId := proj.ID + "_" + proj.Key
-		err = createBoard(conf.Auth.Token, conf.BaseUrl, strconv.Itoa(planrockrId), boardId, "3")
+		err = createBoard(boardId, "3")
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -126,54 +135,48 @@ func JiraImport(host string, user string, password string) error {
 	return nil
 }
 
-func createProject(token string, url string, name string) (int, error) {
+func createProject(name string) error {
 	body := strings.NewReader("parameters%5Bname%5D=" + name)
-	req, err := http.NewRequest("POST", url+"/rpc/v1/project/create", body)
-	if err != nil {
-		return 0, err
-	}
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Origin", "planrockr-cli")
-	req.Header.Set("Authorization-Coderockr", token)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return 0, err
-	}
-	defer resp.Body.Close()
-	if err != nil || resp.StatusCode != http.StatusCreated {
-		return 0, errors.New("Error creating project")
-	}
-	buf, _ := ioutil.ReadAll(resp.Body)
-	type ProjectData struct {
-		Project struct {
-			Id int
-		}
-	}
-	var projectData ProjectData
-	err = json.Unmarshal(buf, &projectData)
-	if err != nil {
-		return 0, errors.New("Error parsing project data")
-	}
-
-	return projectData.Project.Id, nil
-}
-
-func createBoard(token string, server string, projId string, boardId string, boardType string) error  {
-	q, err := url.ParseQuery("parameters[projectId]=" + projId + "&parameters[boardId]=" + boardId + "&parameters[boardType]=" +boardType)
-    if err != nil {
-        return err
-    }
-	body := strings.NewReader(q.Encode())
-	req, err := http.NewRequest("POST", server+"/rpc/v1/project/addBoard", body)
+	req, err := http.NewRequest("POST", configData.BaseUrl + "/rpc/v1/project/create", body)
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Origin", "planrockr-cli")
-	req.Header.Set("Authorization-Coderockr", token)
+	req.Header.Set("Authorization-Coderockr", configData.Auth.Token)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if err != nil || resp.StatusCode != http.StatusCreated {
+		return errors.New("Error creating project")
+	}
+	buf, _ := ioutil.ReadAll(resp.Body)
+	err = json.Unmarshal(buf, &projectData)
+	if err != nil {
+		return errors.New("Error parsing project data")
+	}
+
+	return nil
+}
+
+func createBoard(boardId string, boardType string) error  {
+	q, err := url.ParseQuery("parameters[projectId]=" + strconv.Itoa(projectData.Project.Id) + "&parameters[boardId]=" + boardId + "&parameters[boardType]=" +boardType)
+    if err != nil {
+        return err
+    }
+	body := strings.NewReader(q.Encode())
+	req, err := http.NewRequest("POST", configData.BaseUrl + "/rpc/v1/project/addBoard", body)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Origin", "planrockr-cli")
+	req.Header.Set("Authorization-Coderockr", configData.Auth.Token)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -183,6 +186,31 @@ func createBoard(token string, server string, projId string, boardId string, boa
 	if err != nil || resp.StatusCode != http.StatusCreated {
 		fmt.Println(resp.StatusCode)
 		return errors.New("Error creating board")
+	}
+
+	return nil
+}
+
+func enqueue(toImport string) error {
+    var jsonStr = []byte(toImport)
+	body := bytes.NewBuffer(jsonStr)
+	req, err := http.NewRequest("POST", configData.BaseUrl + "/importer/" + strconv.Itoa(projectData.Project.Id), body)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Origin", "planrockr-cli")
+	req.Header.Set("Authorization-Coderockr", configData.Auth.Token)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if err != nil || resp.StatusCode != http.StatusOK {
+		fmt.Println(resp.StatusCode)
+		return errors.New("Error sending to queue")
 	}
 
 	return nil
@@ -265,8 +293,10 @@ func Process(i JiraImporter, jiraProjectId int, w io.WriteCloser, wErr io.Writer
 				wErr.Write([]byte(errors.New("Failed to Marshal the hook data").Error()))
 				continue
 			}
-			//@todo chamar /importer/{project_id}
-			w.Write(j)
+			err = enqueue(string(j))
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 		op.StartAt = op.StartAt + op.MaxResults
 		if len(issues) < op.MaxResults {
