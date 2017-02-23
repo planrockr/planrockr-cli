@@ -157,7 +157,7 @@ func createHook(host string, user string, password string) error {
 
 	data := Payload{
 		Name:                "Planrockr",
-		URL:                 "https://app.planrockr.com/hook/jira/" + strconv.Itoa(configData.Auth.Id) + "/${project.id}/${project.key}",
+		URL:                 "https://app.planrockr.com/hook/jira/${project.id}/${project.key}/" + strconv.Itoa(configData.Auth.Id),
 		Events:              []string{"jira:issue_created", "jira:issue_updated", "worklog_created", "worklog_updated", "worklog_deleted", "comment_created", "comment_updated", "comment_deleted", "project_deleted", "project_updated", "jira:issue_deleted", "project_created", "jira:worklog_updated"},
 		ExcludeIssueDetails: false,
 	}
