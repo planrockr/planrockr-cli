@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"os"
 
+	"net/http"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -75,4 +77,8 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
+}
+
+var getDefaultClient = func(req *http.Request) (*http.Response, error) {
+	return http.DefaultClient.Do(req)
 }

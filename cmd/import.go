@@ -17,36 +17,41 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/planrockr/planrockr-cli/pkg"
 	"github.com/spf13/cobra"
+)
+
+var (
+	importType     string
+	importServer   string
+	importUser     string
+	importPassword string
 )
 
 // importCmd represents the import command
 var importCmd = &cobra.Command{
 	Use:   "import",
 	Short: "import a project to Planrockr",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Long:  "You can import a project from Jira or Gitlab",
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
-		fmt.Println("import called")
+		var err error
+		switch importType {
+		case "jira":
+			err = pkg.JiraImport(importServer, importUser, importPassword)
+		case "gitlab":
+			fmt.Println("Not implemented yet")
+		}
+		if err != nil {
+			fmt.Println(err)
+		}
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(importCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// importCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// importCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
+	importCmd.Flags().StringVarP(&importType, "type", "t", "", "Import source")
+	importCmd.Flags().StringVarP(&importServer, "server", "s", "", "Server address")
+	importCmd.Flags().StringVarP(&importUser, "user", "u", "", "User e-mail")
+	importCmd.Flags().StringVarP(&importPassword, "password", "p", "", "User password")
 }

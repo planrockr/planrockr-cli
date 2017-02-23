@@ -18,16 +18,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/planrockr/planrockr-cli/config"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
+
+	"github.com/planrockr/planrockr-cli/config"
+	"github.com/spf13/cobra"
 )
 
 var (
-	user     string
-	password string
+	authUser     string
+	authPassword string
 )
 
 // authCmd represents the auth command
@@ -36,20 +38,25 @@ var authCmd = &cobra.Command{
 	Short: "auth commands",
 	Long:  "You need to use the e-mail and password that you use to log in http://planrockr.com",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := doLogin(user, password)
+		err := doLogin(authUser, authPassword)
 		if err != nil {
 			fmt.Println(err)
 		}
 	},
 }
 
-var getDefaultClient = func(req *http.Request) (*http.Response, error) {
-	return http.DefaultClient.Do(req)
-}
-
 func doLogin(user string, password string) error {
-	body := strings.NewReader("parameters%5Blogin%5D=" + user + "&parameters%5Bpassword%5D=" + password)
-	req, err := http.NewRequest("POST", "https://app.planrockr.com/rpc/v1/authentication/login", body)
+	errConfig := config.Init()
+	if errConfig != nil {
+		return errors.New("Error reading config file")
+	}
+	conf := config.Get()
+	q, err := url.ParseQuery("parameters[login]=" + user + "&parameters[password]=" + password)
+	if err != nil {
+		return err
+	}
+	body := strings.NewReader(q.Encode())
+	req, err := http.NewRequest("POST", conf.BaseUrl+"/rpc/v1/authentication/login", body)
 	if err != nil {
 		return err
 	}
@@ -67,22 +74,25 @@ func doLogin(user string, password string) error {
 	}
 	buf, _ := ioutil.ReadAll(resp.Body)
 
-	err = config.Init()
-	if err != nil {
-		return errors.New("Error reading config file")
-	}
-
 	type AuthData struct {
 		Token         string
 		Refresh_Token string
+		Id            int
 	}
 	var authData AuthData
 	err = json.Unmarshal(buf, &authData)
 	if err != nil {
 		return errors.New("Error parsing authorization data")
 	}
-	err = config.Set("auth.token", authData.Token)
-	err = config.Set("auth.refreshtoken", authData.Refresh_Token)
+	err = config.SetString("auth.token", authData.Token)
+	if err != nil {
+		return errors.New("Error writing config file")
+	}
+	err = config.SetString("auth.refreshtoken", authData.Refresh_Token)
+	if err != nil {
+		return errors.New("Error writing config file")
+	}
+	err = config.SetInt("auth.id", authData.Id)
 	if err != nil {
 		return errors.New("Error writing config file")
 	}
@@ -95,7 +105,6 @@ func doLogin(user string, password string) error {
 func init() {
 	RootCmd.AddCommand(authCmd)
 
-	authCmd.Flags().StringVarP(&user, "user", "u", "", "User e-mail")
-	authCmd.Flags().StringVarP(&password, "password", "p", "", "User password")
-
+	authCmd.Flags().StringVarP(&authUser, "user", "u", "", "User e-mail")
+	authCmd.Flags().StringVarP(&authPassword, "password", "p", "", "User password")
 }

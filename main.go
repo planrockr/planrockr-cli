@@ -16,8 +16,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/planrockr/planrockr-cli/cmd"
 	"os"
+
+	"github.com/planrockr/planrockr-cli/cmd"
 )
 
 func main() {
