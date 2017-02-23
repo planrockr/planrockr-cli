@@ -42,7 +42,7 @@ type IssueHook struct {
 	Timestamp    int64                  `json:"timestamp"`
 	WebhookEvent string                 `json:"webhookEvent"`
 	TypeName     string                 `json:"issue_event_type_name,omitempty"`
-	User         jiraApi.User           `json:"user,omitempty"`
+	User         *jiraApi.User          `json:"user,omitempty"`
 	Issue        jiraApi.Issue          `json:"issue,omitempty"`
 	Changelog    *changelog             `json:"changelog,omitempty"`
 	Comment      *jiraApi.Comment       `json:"comment,omitempty"`
@@ -113,6 +113,7 @@ func JiraImport(host string, user string, password string) error {
 			continue
 		}
 		pName := proj.Name
+		pKey := proj.Key
 		err = createProject(pName)
 		if err != nil {
 			fmt.Println(err)
@@ -126,7 +127,7 @@ func JiraImport(host string, user string, password string) error {
 		wLog := log.StandardLogger().WriterLevel(log.ErrorLevel)
 		defer wLog.Close()
 		go func() {
-			Process(i, pID, producer, wLog)
+			Process(i, pID, pKey, producer, wLog)
 			wg.Done()
 		}()
 	}
@@ -299,7 +300,7 @@ func selectProject(list jiraApi.ProjectList) jiraApi.ProjectList {
 	return res
 }
 
-func Process(i JiraImporter, jiraProjectId int, w io.WriteCloser, wErr io.Writer) {
+func Process(i JiraImporter, jiraProjectId int, jiraProjectKey string, w io.WriteCloser, wErr io.Writer) {
 	op := jiraApi.SearchOptions{
 		StartAt:    0,
 		MaxResults: 50,
@@ -331,6 +332,7 @@ func Process(i JiraImporter, jiraProjectId int, w io.WriteCloser, wErr io.Writer
 		for _, issue := range issues {
 			hook := hook{
 				EventName: "jira:issue_imported",
+				EventData: map[string]interface{}{"project_id": jiraProjectId, "project_key": jiraProjectKey},
 				Data: IssueHook{
 					Issue:        issue,
 					Timestamp:    time.Now().Unix() * 1000,
