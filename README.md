@@ -32,7 +32,7 @@ Use "planrockr-cli [command] --help" for more information about a command.
 You can use Homebrew to install planrockr-cli on Mac OS X by using the command below:
 
 	brew tap planrockr/planrockr-cli
-    	brew install planrockr-cli
+	brew install planrockr-cli
 
 *GNU/Linux*
 
