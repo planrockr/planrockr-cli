@@ -41,6 +41,7 @@ func Init() error {
 			return err
 		}
 		file.Close()
+		SetString("baseurl", "https://app.planrockr.com")
 	}
 
 	viper.SetConfigName(defaultParams.ConfigName)
