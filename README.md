@@ -49,17 +49,17 @@ You can download the archive from your browser, or copy its URL and retrieve it 
 **MacOS**
 
 	cd ~
-	curl -L https://github.com/planrockr/planrockr-cli/releases/download/v1.0.0/planrockr-cli-1.0.0-darwin-10.6-amd64.tar.gz | tar xz
+	curl -L https://github.com/planrockr/planrockr-cli/releases/download/v1.0.2/planrockr-cli-1.0.2-darwin-10.12-amd64.tar.gz | tar xz
 
 **Gnu/Linux (with wget)**
 
 	cd ~
-	wget -qO- https://github.com/planrockr/planrockr-cli/releases/download/v1.0.0/planrockr-cli-1.0.0-linux-amd64.tar.gz  | tar xz
+	wget -qO- https://github.com/planrockr/planrockr-cli/releases/download/v1.0.2/planrockr-cli-1.0.2-linux-amd64.tar.gz  | tar xz
 
 **Gnu/Linux (with curl)**
 
 	cd ~
-	curl -L https://github.com/planrockr/planrockr-cli/releases/download/v1.0.0/planrockr-cli-1.0.0-linux-amd64.tar.gz  | tar xz
+	curl -L https://github.com/planrockr/planrockr-cli/releases/download/v1.0.2/planrockr-cli-1.0.2-linux-amd64.tar.gz  | tar xz
 
 Move the planrockr-cli binary to somewhere in your path. For example:
 
