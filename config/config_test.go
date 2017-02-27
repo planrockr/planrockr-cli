@@ -88,5 +88,6 @@ func TestSaveWithOutConfigFile(t *testing.T) {
 	var config Config
 	viper.Unmarshal(&config)
 	assert.EqualValues(t, "teste", config.Auth.Token, "Config get wrong value for auth.token")
+	assert.EqualValues(t, "https://app.planrockr.com", config.BaseUrl, "Config get wrong value for BaseUrl")
 	os.Remove("/tmp/config_not_found.yaml")
 }
