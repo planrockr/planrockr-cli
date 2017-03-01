@@ -61,9 +61,16 @@ You can download the archive from your browser, or copy its URL and retrieve it 
 	cd ~
 	curl -L https://github.com/planrockr/planrockr-cli/releases/download/v1.0.2/planrockr-cli-1.0.2-linux-amd64.tar.gz  | tar xz
 
+
 Move the planrockr-cli binary to somewhere in your path. For example:
 
-	sudo mv ./planrockr-cli /usr/local/bin
+    sudo mv ./planrockr-cli /usr/local/bin
+
+**Windows**
+
+Download on:
+
+    https://github.com/planrockr/planrockr-cli/releases/download/v1.0.2/planrockr-cli-1.0.2-windows-amd64.tar.gz
 
 
 ### Option 3 – Build From Source
