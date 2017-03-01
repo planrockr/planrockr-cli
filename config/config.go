@@ -7,6 +7,8 @@ import (
 	"io"
 	"os"
 
+	"runtime"
+
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 )
@@ -32,7 +34,7 @@ var defaultParams = Params{".planrockr-cli", ""}
 // Init will initilize the Config struct using one file or enviroment variables.
 func Init() error {
 	if defaultParams.ConfigPath == "" {
-		defaultParams.ConfigPath = os.Getenv("HOME")
+		defaultParams.ConfigPath = getUserHomeDir()
 	}
 	var _, err = os.Stat(defaultParams.ConfigPath + "/" + defaultParams.ConfigName + ".yaml")
 	if os.IsNotExist(err) {
@@ -57,6 +59,14 @@ func Init() error {
 	err = viper.Unmarshal(&config)
 
 	return err
+}
+
+func getUserHomeDir() string {
+	env := "HOME"
+	if runtime.GOOS == "windows" {
+		env = "USERPROFILE"
+	}
+	return os.Getenv(env)
 }
 
 func SetParameters(params Params) {
