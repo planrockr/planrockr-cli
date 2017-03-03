@@ -94,6 +94,7 @@ func JiraImport(host string, user string, password string) error {
 	}
 	i.client = c
 	i.client.Authentication.SetBasicAuth(i.user, i.pass)
+
 	projects, err := GetProjects(i)
 	if err != nil {
 		log.Fatalf("[IMPORTER] Failed to get The project list: %v", err)
@@ -269,10 +270,9 @@ func enqueue(toImport string) error {
 
 func GetProjects(i JiraImporter) (jiraApi.ProjectList, error) {
 	projects, resp, err := i.client.Project.GetList()
-	if err != nil {
-		body, _ := ioutil.ReadAll(resp.Body)
-		resp.Body.Close()
-		err = errors.New("Failed to get the list of projects. Resp: " + string(body))
+	if err != nil || resp == nil || projects == nil {
+		err = errors.New("Failed to get the list of projects. Jira's response: " + string(resp.Status))
+		return nil, err
 	}
 	return *projects, err
 }
