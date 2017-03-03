@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/url"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -18,8 +18,6 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	jiraApi "github.com/andygrunwald/go-jira"
-
-	"net/http"
 
 	"github.com/planrockr/planrockr-cli/config"
 )
@@ -70,7 +68,6 @@ type ProjectData struct {
 }
 
 var projectData ProjectData
-var configData config.Config
 
 func JiraImport(host string, user string, password string) error {
 	err := config.Init()
@@ -139,130 +136,6 @@ func JiraImport(host string, user string, password string) error {
 		fmt.Println(err)
 	}
 	fmt.Println("Webhook created")
-
-	return nil
-}
-
-func createHook(host string, user string, password string) error {
-	// Disable HTTP/2
-	http.DefaultClient.Transport = &http.Transport{
-		TLSNextProto: make(map[string]func(authority string, c *tls.Conn) http.RoundTripper),
-	}
-	type Payload struct {
-		Name                string   `json:"name"`
-		URL                 string   `json:"url"`
-		Events              []string `json:"events"`
-		ExcludeIssueDetails bool     `json:"excludeIssueDetails"`
-	}
-
-	data := Payload{
-		Name:                "Planrockr",
-		URL:                 "https://app.planrockr.com/hook/jira/${project.id}/${project.key}/" + strconv.Itoa(configData.Auth.Id),
-		Events:              []string{"jira:issue_created", "jira:issue_updated", "worklog_created", "worklog_updated", "worklog_deleted", "comment_created", "comment_updated", "comment_deleted", "project_deleted", "project_updated", "jira:issue_deleted", "project_created", "jira:worklog_updated"},
-		ExcludeIssueDetails: false,
-	}
-	payloadBytes, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-	body := bytes.NewReader(payloadBytes)
-
-	req, err := http.NewRequest("POST", host+"/rest/webhooks/1.0/webhook", body)
-	if err != nil {
-		return err
-	}
-	req.SetBasicAuth(user, password)
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	return nil
-}
-
-func createProject(name string) error {
-	body := strings.NewReader("parameters%5Bname%5D=" + name)
-	req, err := http.NewRequest("POST", configData.BaseUrl+"/rpc/v1/project/create", body)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Origin", "planrockr-cli")
-	req.Header.Set("Authorization-Coderockr", configData.Auth.Token)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if err != nil || resp.StatusCode != http.StatusCreated {
-		if resp.StatusCode == http.StatusUnauthorized {
-			panic("You must login")
-		}
-		return errors.New("Error creating project")
-	}
-	buf, _ := ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(buf, &projectData)
-	if err != nil {
-		return errors.New("Error parsing project data")
-	}
-
-	return nil
-}
-
-func createBoard(boardId string, boardType string) error {
-	q, err := url.ParseQuery("parameters[projectId]=" + strconv.Itoa(projectData.Project.Id) + "&parameters[boardId]=" + boardId + "&parameters[boardType]=" + boardType)
-	if err != nil {
-		return err
-	}
-	body := strings.NewReader(q.Encode())
-	req, err := http.NewRequest("POST", configData.BaseUrl+"/rpc/v1/project/addBoard", body)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Origin", "planrockr-cli")
-	req.Header.Set("Authorization-Coderockr", configData.Auth.Token)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if err != nil || resp.StatusCode != http.StatusCreated {
-		fmt.Println(resp.StatusCode)
-		return errors.New("Error creating board")
-	}
-
-	return nil
-}
-
-func enqueue(toImport string) error {
-	var jsonStr = []byte(toImport)
-	body := bytes.NewBuffer(jsonStr)
-	req, err := http.NewRequest("POST", configData.BaseUrl+"/importer/"+strconv.Itoa(projectData.Project.Id), body)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Origin", "planrockr-cli")
-	req.Header.Set("Authorization-Coderockr", configData.Auth.Token)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if err != nil || resp.StatusCode != http.StatusOK {
-		fmt.Println(resp.StatusCode)
-		return errors.New("Error sending to queue")
-	}
 
 	return nil
 }
@@ -355,4 +228,44 @@ func Process(i JiraImporter, jiraProjectId int, jiraProjectKey string, w io.Writ
 			return
 		}
 	}
+}
+
+func createHook(host string, user string, password string) error {
+	// Disable HTTP/2
+	http.DefaultClient.Transport = &http.Transport{
+		TLSNextProto: make(map[string]func(authority string, c *tls.Conn) http.RoundTripper),
+	}
+	type Payload struct {
+		Name                string   `json:"name"`
+		URL                 string   `json:"url"`
+		Events              []string `json:"events"`
+		ExcludeIssueDetails bool     `json:"excludeIssueDetails"`
+	}
+
+	data := Payload{
+		Name:                "Planrockr",
+		URL:                 "https://app.planrockr.com/hook/jira/${project.id}/${project.key}/" + strconv.Itoa(configData.Auth.Id),
+		Events:              []string{"jira:issue_created", "jira:issue_updated", "worklog_created", "worklog_updated", "worklog_deleted", "comment_created", "comment_updated", "comment_deleted", "project_deleted", "project_updated", "jira:issue_deleted", "project_created", "jira:worklog_updated"},
+		ExcludeIssueDetails: false,
+	}
+	payloadBytes, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	body := bytes.NewReader(payloadBytes)
+
+	req, err := http.NewRequest("POST", host+"/rest/webhooks/1.0/webhook", body)
+	if err != nil {
+		return err
+	}
+	req.SetBasicAuth(user, password)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
 }

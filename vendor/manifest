@@ -260,6 +260,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/xanzy/go-gitlab",
+			"repository": "https://github.com/xanzy/go-gitlab",
+			"vcs": "git",
+			"revision": "7474322cd32418f0b3ab5732632aa0b8443a43e4",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/xordataexchange/crypt/backend",
 			"repository": "https://github.com/xordataexchange/crypt",
 			"vcs": "git",
