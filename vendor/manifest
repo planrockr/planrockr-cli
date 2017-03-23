@@ -119,6 +119,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/mattn/go-runewidth",
+			"repository": "https://github.com/mattn/go-runewidth",
+			"vcs": "git",
+			"revision": "14207d285c6c197daabb5c9793d63e7af9ab2d50",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/mitchellh/mapstructure",
 			"repository": "https://github.com/mitchellh/mapstructure",
 			"vcs": "git",
@@ -435,6 +443,14 @@
 			"repository": "https://gopkg.in/airbrake/gobrake.v2",
 			"vcs": "git",
 			"revision": "668876711219e8b0206e2994bf0a59d889c775aa",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/cheggaaa/pb.v1",
+			"repository": "https://gopkg.in/cheggaaa/pb.v1",
+			"vcs": "git",
+			"revision": "0817e3a1f8de9e3c78b159699b3c07d53e24a963",
 			"branch": "master",
 			"notests": true
 		},

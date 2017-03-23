@@ -18,7 +18,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	jiraApi "github.com/andygrunwald/go-jira"
-
+	"gopkg.in/cheggaaa/pb.v1"
 	"net/http"
 
 	"github.com/planrockr/planrockr-cli/config"
@@ -69,6 +69,10 @@ type ProjectData struct {
 	}
 }
 
+type BoardData struct {
+	Id int
+}
+
 var projectData ProjectData
 var configData config.Config
 
@@ -100,13 +104,15 @@ func JiraImport(host string, user string, password string) error {
 		log.Fatalf("[IMPORTER] Failed to get The project list: %v", err)
 		return err
 	}
-	projects = selectProject(projects)
+	projects, jql := selectProject(projects)
 
 	var wg sync.WaitGroup
 	//file for debug
 	producer, err := os.Create("/tmp/dat2")
 	// Start processing the importers.
 	fmt.Println("Importing...")
+	var projectId int
+	var boardId int
 	for _, proj := range projects {
 		pID, err := strconv.Atoi(proj.ID)
 		if err != nil {
@@ -115,12 +121,11 @@ func JiraImport(host string, user string, password string) error {
 		}
 		pName := proj.Name
 		pKey := proj.Key
-		err = createProject(pName)
+		projectId, err = createProject(pName)
 		if err != nil {
 			fmt.Println(err)
 		}
-		boardId := proj.ID + "_" + proj.Key
-		err = createBoard(boardId, "3")
+		boardId, err = createBoard(proj.ID+"_"+proj.Key, "3")
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -128,14 +133,14 @@ func JiraImport(host string, user string, password string) error {
 		wLog := log.StandardLogger().WriterLevel(log.ErrorLevel)
 		defer wLog.Close()
 		go func() {
-			Process(i, pID, pKey, producer, wLog)
+			Process(i, pID, pKey, jql, producer, wLog)
 			wg.Done()
 		}()
 	}
 	wg.Wait()
 	fmt.Println("Finished importing projects")
 
-	err = createHook(i.url, i.user, i.pass)
+	err = createHook(i.url, jql, projectId, boardId, i.user, i.pass)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -144,22 +149,32 @@ func JiraImport(host string, user string, password string) error {
 	return nil
 }
 
-func createHook(host string, user string, password string) error {
+func createHook(host string, jql string, projectId int, boardId int, user string, password string) error {
 	// Disable HTTP/2
 	http.DefaultClient.Transport = &http.Transport{
 		TLSNextProto: make(map[string]func(authority string, c *tls.Conn) http.RoundTripper),
+	}
+	type Filters struct {
+		IssueRelatedEventsSection string `json:"issue-related-events-section"`
 	}
 	type Payload struct {
 		Name                string   `json:"name"`
 		URL                 string   `json:"url"`
 		Events              []string `json:"events"`
+		JqlFilter           string   `json:"jqlFilter"`
+		Filters             Filters  `json:"filters"`
 		ExcludeIssueDetails bool     `json:"excludeIssueDetails"`
 	}
 
+	if jql == "\n" {
+		jql = ""
+	}
 	data := Payload{
 		Name:                "Planrockr",
-		URL:                 "https://app.planrockr.com/hook/jira/${project.id}/${project.key}/" + strconv.Itoa(configData.Auth.Id),
+		URL:                 "https://app.planrockr.com/hook/jira/${project.id}/${project.key}/" + strconv.Itoa(configData.Auth.Id) + "/" + strconv.Itoa(projectId) + "/" + strconv.Itoa(boardId),
 		Events:              []string{"jira:issue_created", "jira:issue_updated", "worklog_created", "worklog_updated", "worklog_deleted", "comment_created", "comment_updated", "comment_deleted", "project_deleted", "project_updated", "jira:issue_deleted", "project_created", "jira:worklog_updated"},
+		JqlFilter:           jql,
+		Filters:             Filters{IssueRelatedEventsSection: jql},
 		ExcludeIssueDetails: false,
 	}
 	payloadBytes, err := json.Marshal(data)
@@ -184,11 +199,11 @@ func createHook(host string, user string, password string) error {
 	return nil
 }
 
-func createProject(name string) error {
+func createProject(name string) (int, error) {
 	body := strings.NewReader("parameters%5Bname%5D=" + name)
 	req, err := http.NewRequest("POST", configData.BaseUrl+"/rpc/v1/project/create", body)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -197,33 +212,33 @@ func createProject(name string) error {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer resp.Body.Close()
 	if err != nil || resp.StatusCode != http.StatusCreated {
 		if resp.StatusCode == http.StatusUnauthorized {
 			panic("You must login")
 		}
-		return errors.New("Error creating project")
+		return 0, errors.New("Error creating project")
 	}
 	buf, _ := ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal(buf, &projectData)
 	if err != nil {
-		return errors.New("Error parsing project data")
+		return 0, errors.New("Error parsing project data")
 	}
 
-	return nil
+	return projectData.Project.Id, nil
 }
 
-func createBoard(boardId string, boardType string) error {
+func createBoard(boardId string, boardType string) (int, error) {
 	q, err := url.ParseQuery("parameters[projectId]=" + strconv.Itoa(projectData.Project.Id) + "&parameters[boardId]=" + boardId + "&parameters[boardType]=" + boardType)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	body := strings.NewReader(q.Encode())
 	req, err := http.NewRequest("POST", configData.BaseUrl+"/rpc/v1/project/addBoard", body)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -232,15 +247,21 @@ func createBoard(boardId string, boardType string) error {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer resp.Body.Close()
 	if err != nil || resp.StatusCode != http.StatusCreated {
 		fmt.Println(resp.StatusCode)
-		return errors.New("Error creating board")
+		return 0, errors.New("Error creating board")
+	}
+	buf, _ := ioutil.ReadAll(resp.Body)
+	b := BoardData{}
+	err = json.Unmarshal(buf, &b)
+	if err != nil {
+		return 0, errors.New("Error parsing board data")
 	}
 
-	return nil
+	return b.Id, nil
 }
 
 func enqueue(toImport string) error {
@@ -277,37 +298,44 @@ func GetProjects(i JiraImporter) (jiraApi.ProjectList, error) {
 	return *projects, err
 }
 
-func selectProject(list jiraApi.ProjectList) jiraApi.ProjectList {
+func selectProject(list jiraApi.ProjectList) (jiraApi.ProjectList, string) {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("Projects available:")
 	for i, op := range list {
 		fmt.Printf("\t%d - %s(%s)\n", i, op.Name, op.Key)
 	}
-	fmt.Print("Select options(space to separate): ")
-	str, _, err := reader.ReadLine()
+	fmt.Print("Select option: ")
+	selected, _, err := reader.ReadLine()
 	if err != nil {
 		log.Fatal(err)
 	}
-	selected := strings.Split(string(str), " ")
 	res := make(jiraApi.ProjectList, 0, len(list))
-	for _, s := range selected {
-		i, err := strconv.Atoi(s)
-		if err != nil || i >= len(list) || i < 0 {
-			log.Fatal("Option invalid", err)
-		}
-		res = append(res, list[i])
+	i, err := strconv.Atoi(string(selected))
+	if err != nil {
+		log.Fatal("Option invalid", err)
 	}
-	return res
+	res = append(res, list[i])
+	fmt.Print("JQL query(enter to none): ")
+	jql, _, err := reader.ReadLine()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return res, string(jql)
 }
 
-func Process(i JiraImporter, jiraProjectId int, jiraProjectKey string, w io.WriteCloser, wErr io.Writer) {
+func Process(i JiraImporter, jiraProjectId int, jiraProjectKey string, jql string, w io.WriteCloser, wErr io.Writer) {
 	op := jiraApi.SearchOptions{
 		StartAt:    0,
 		MaxResults: 50,
 	}
 
 	for {
-		issues, resp, err := i.client.Issue.Search(fmt.Sprintf("project=%d", jiraProjectId), &op)
+		searchString := fmt.Sprintf("project=%d", jiraProjectId)
+		if jql != "\n" {
+			searchString = jql
+		}
+		issues, resp, err := i.client.Issue.Search(searchString, &op)
 		if err != nil {
 			body, _ := ioutil.ReadAll(resp.Body)
 			resp.Body.Close()
@@ -329,6 +357,7 @@ func Process(i JiraImporter, jiraProjectId int, jiraProjectKey string, w io.Writ
 			continue
 		}
 
+		bar := pb.StartNew(len(issues))
 		for _, issue := range issues {
 			hook := hook{
 				EventName: "jira:issue_imported",
@@ -349,7 +378,9 @@ func Process(i JiraImporter, jiraProjectId int, jiraProjectKey string, w io.Writ
 			if err != nil {
 				fmt.Println(err)
 			}
+			bar.Increment()
 		}
+		bar.FinishPrint("Issues imported")
 		op.StartAt = op.StartAt + op.MaxResults
 		if len(issues) < op.MaxResults {
 			return
