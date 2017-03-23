@@ -125,7 +125,7 @@ func JiraImport(host string, user string, password string) error {
 		if err != nil {
 			fmt.Println(err)
 		}
-		boardId, err = createBoard(proj.ID + "_" + proj.Key, "3")
+		boardId, err = createBoard(proj.ID+"_"+proj.Key, "3")
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -161,8 +161,8 @@ func createHook(host string, jql string, projectId int, boardId int, user string
 		Name                string   `json:"name"`
 		URL                 string   `json:"url"`
 		Events              []string `json:"events"`
-		JqlFilter			string   `json:"jqlFilter"`
-		Filters				Filters	 `json:"filters"`
+		JqlFilter           string   `json:"jqlFilter"`
+		Filters             Filters  `json:"filters"`
 		ExcludeIssueDetails bool     `json:"excludeIssueDetails"`
 	}
 
@@ -173,8 +173,8 @@ func createHook(host string, jql string, projectId int, boardId int, user string
 		Name:                "Planrockr",
 		URL:                 "https://app.planrockr.com/hook/jira/${project.id}/${project.key}/" + strconv.Itoa(configData.Auth.Id) + "/" + strconv.Itoa(projectId) + "/" + strconv.Itoa(boardId),
 		Events:              []string{"jira:issue_created", "jira:issue_updated", "worklog_created", "worklog_updated", "worklog_deleted", "comment_created", "comment_updated", "comment_deleted", "project_deleted", "project_updated", "jira:issue_deleted", "project_created", "jira:worklog_updated"},
-		JqlFilter: jql,
-		Filters: Filters{IssueRelatedEventsSection: jql},
+		JqlFilter:           jql,
+		Filters:             Filters{IssueRelatedEventsSection: jql},
 		ExcludeIssueDetails: false,
 	}
 	payloadBytes, err := json.Marshal(data)
