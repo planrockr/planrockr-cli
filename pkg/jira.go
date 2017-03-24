@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -98,23 +97,30 @@ func JiraImport(host string, user string, password string) error {
 	}
 	i.client = c
 	i.client.Authentication.SetBasicAuth(i.user, i.pass)
+	var wg sync.WaitGroup
+	jql, err := getJql()
+	if err != nil {
+		return errors.New("Error reading JQL")
+	}
+	if jql != "\n" && jql != "" {
+		err = processWithJql(jql, i, &wg)
+		return err
+	}
 
 	projects, err := GetProjects(i)
 	if err != nil {
 		log.Fatalf("[IMPORTER] Failed to get The project list: %v", err)
 		return err
 	}
-	projects, jql := selectProject(projects)
+	projects = selectProject(projects)
 
-	var wg sync.WaitGroup
-	//file for debug
-	producer, err := os.Create("/tmp/dat2")
 	// Start processing the importers.
 	fmt.Println("Importing...")
 	var projectId int
 	var boardId int
 	for _, proj := range projects {
 		pID, err := strconv.Atoi(proj.ID)
+		jql = fmt.Sprintf("project=%d", pID)
 		if err != nil {
 			log.Errorf("[IMPORTER] Failed to convert projectID to integer: %v", err)
 			continue
@@ -128,12 +134,11 @@ func JiraImport(host string, user string, password string) error {
 		boardId, err = createBoard(proj.ID+"_"+proj.Key, "3")
 		if err != nil {
 			fmt.Println(err)
+			return err
 		}
 		wg.Add(1)
-		wLog := log.StandardLogger().WriterLevel(log.ErrorLevel)
-		defer wLog.Close()
 		go func() {
-			Process(i, pID, pKey, jql, producer, wLog)
+			Process(i, pID, pKey, jql)
 			wg.Done()
 		}()
 	}
@@ -143,6 +148,36 @@ func JiraImport(host string, user string, password string) error {
 	err = createHook(i.url, jql, projectId, boardId, i.user, i.pass)
 	if err != nil {
 		fmt.Println(err)
+		return err
+	}
+	fmt.Println("Webhook created")
+
+	return nil
+}
+
+func processWithJql(jql string, i JiraImporter, wg *sync.WaitGroup) error {
+	var projectId int
+	var boardId int
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Enter project name: ")
+	input, _, err := reader.ReadLine()
+	if err != nil {
+		return err
+	}
+	pName := string(input)
+	projectId, err = createProject(pName)
+	if err != nil {
+		return err
+	}
+	boardId, err = createBoard(pName, "3")
+	if err != nil {
+		return err
+	}
+	Process(i, 0, "0", jql)
+
+	err = createHook(i.url, jql, projectId, boardId, i.user, i.pass)
+	if err != nil {
+		return err
 	}
 	fmt.Println("Webhook created")
 
@@ -298,8 +333,20 @@ func GetProjects(i JiraImporter) (jiraApi.ProjectList, error) {
 	return *projects, err
 }
 
-func selectProject(list jiraApi.ProjectList) (jiraApi.ProjectList, string) {
+func getJql() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("JQL query(enter to select a project): ")
+	jql, _, err := reader.ReadLine()
+	if err != nil {
+		return "", err
+	}
+	return string(jql), nil
+}
+
+func selectProject(list jiraApi.ProjectList) jiraApi.ProjectList {
+	reader := bufio.NewReader(os.Stdin)
+	res := make(jiraApi.ProjectList, 0, len(list))
+
 	fmt.Println("Projects available:")
 	for i, op := range list {
 		fmt.Printf("\t%d - %s(%s)\n", i, op.Name, op.Key)
@@ -309,22 +356,16 @@ func selectProject(list jiraApi.ProjectList) (jiraApi.ProjectList, string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	res := make(jiraApi.ProjectList, 0, len(list))
 	i, err := strconv.Atoi(string(selected))
 	if err != nil {
 		log.Fatal("Option invalid", err)
 	}
 	res = append(res, list[i])
-	fmt.Print("JQL query(enter to none): ")
-	jql, _, err := reader.ReadLine()
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	return res, string(jql)
+	return res
 }
 
-func Process(i JiraImporter, jiraProjectId int, jiraProjectKey string, jql string, w io.WriteCloser, wErr io.Writer) {
+func Process(i JiraImporter, jiraProjectId int, jiraProjectKey string, jql string) {
 	op := jiraApi.SearchOptions{
 		StartAt:    0,
 		MaxResults: 50,
@@ -332,7 +373,7 @@ func Process(i JiraImporter, jiraProjectId int, jiraProjectKey string, jql strin
 
 	for {
 		searchString := fmt.Sprintf("project=%d", jiraProjectId)
-		if jql != "\n" {
+		if jql != "\n" && jql != "" {
 			searchString = jql
 		}
 		issues, resp, err := i.client.Issue.Search(searchString, &op)
@@ -340,7 +381,7 @@ func Process(i JiraImporter, jiraProjectId int, jiraProjectKey string, jql strin
 			body, _ := ioutil.ReadAll(resp.Body)
 			resp.Body.Close()
 			if resp.StatusCode != 429 {
-				wErr.Write([]byte(errors.New("Failed to get issues. Resp:" + string(body)).Error()))
+				fmt.Println("Failed to get issues. Resp:" + string(body))
 				continue
 			}
 			h := resp.Header.Get("X-Ratelimit-Reset")
@@ -352,7 +393,7 @@ func Process(i JiraImporter, jiraProjectId int, jiraProjectKey string, jql strin
 					t = t1.Sub(t1)
 				}
 			}
-			wErr.Write([]byte(errors.New("Failed to get issues by Rate limit. Slepping for %d ms. Resp: " + string(body)).Error()))
+			fmt.Println("Failed to get issues by Rate limit. Slepping for %d ms. Resp: " + string(body))
 			time.Sleep(t)
 			continue
 		}
@@ -371,7 +412,7 @@ func Process(i JiraImporter, jiraProjectId int, jiraProjectKey string, jql strin
 			}
 			j, err := json.Marshal(hook)
 			if err != nil {
-				wErr.Write([]byte(errors.New("Failed to Marshal the hook data").Error()))
+				fmt.Println("Failed to Marshal the hook data")
 				continue
 			}
 			err = enqueue(string(j))
