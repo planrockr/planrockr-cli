@@ -173,12 +173,7 @@ func processWithJql(jql string, i JiraImporter, wg *sync.WaitGroup) error {
 	if err != nil {
 		return err
 	}
-	wg.Add(1)
-	go func() {
-		Process(i, 0, "0", jql)
-		wg.Done()
-	}()
-	wg.Wait()
+	Process(i, 0, "0", jql)
 
 	err = createHook(i.url, jql, projectId, boardId, i.user, i.pass)
 	if err != nil {
