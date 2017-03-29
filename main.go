@@ -19,9 +19,27 @@ import (
 	"os"
 
 	"github.com/planrockr/planrockr-cli/cmd"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/evalphobia/logrus_sentry"
+	"time"
 )
 
+var LOG_SENTRY = "NO"
+
 func main() {
+	if LOG_SENTRY != "NO" {
+		hook, err := logrus_sentry.NewSentryHook(LOG_SENTRY, []log.Level{
+			log.PanicLevel,
+			log.FatalLevel,
+			log.ErrorLevel,
+		})
+		if err == nil {
+			hook.StacktraceConfiguration.Enable = true
+			hook.Timeout = 20 * time.Second
+			log.AddHook(hook)
+		}
+	}
 	if err := cmd.RootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)

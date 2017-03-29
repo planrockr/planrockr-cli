@@ -26,6 +26,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/certifi/gocertifi",
+			"repository": "https://github.com/certifi/gocertifi",
+			"vcs": "git",
+			"revision": "03be5e6bb9874570ea7fb0961225d193cbc374c5",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/coreos/go-etcd/etcd",
 			"repository": "https://github.com/coreos/go-etcd",
 			"vcs": "git",
@@ -62,6 +70,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/evalphobia/logrus_sentry",
+			"repository": "https://github.com/evalphobia/logrus_sentry",
+			"vcs": "git",
+			"revision": "3515445f906f3bc291b78599b57b7374951cbb79",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/fatih/structs",
 			"repository": "https://github.com/fatih/structs",
 			"vcs": "git",
@@ -74,6 +90,14 @@
 			"repository": "https://github.com/fsnotify/fsnotify",
 			"vcs": "git",
 			"revision": "a904159b9206978bb6d53fcc7a769e5cd726c737",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/getsentry/raven-go",
+			"repository": "https://github.com/getsentry/raven-go",
+			"vcs": "git",
+			"revision": "b68337dbf03e7fbb53d9fd9b63fd09b28e8f13f7",
 			"branch": "master",
 			"notests": true
 		},
