@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/planrockr/planrockr-cli/pkg"
 	"github.com/spf13/cobra"
 )
@@ -42,7 +43,7 @@ var importCmd = &cobra.Command{
 			fmt.Println("Not implemented yet")
 		}
 		if err != nil {
-			fmt.Println(err)
+			log.Fatalf("Error importing: %v", err)
 		}
 	},
 }

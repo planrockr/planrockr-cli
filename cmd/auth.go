@@ -25,6 +25,8 @@ import (
 
 	"github.com/planrockr/planrockr-cli/config"
 	"github.com/spf13/cobra"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 var (
@@ -40,7 +42,7 @@ var authCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		err := doLogin(authUser, authPassword)
 		if err != nil {
-			fmt.Println(err)
+			log.Fatalf("Auth error: %v", err)
 		}
 	},
 }

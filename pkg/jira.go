@@ -109,8 +109,7 @@ func JiraImport(host string, user string, password string) error {
 
 	projects, err := GetProjects(i)
 	if err != nil {
-		log.Fatalf("[IMPORTER] Failed to get The project list: %v", err)
-		return err
+		return errors.New("[IMPORTER] Failed to get The project list")
 	}
 	projects = selectProject(projects)
 
@@ -129,11 +128,10 @@ func JiraImport(host string, user string, password string) error {
 		pKey := proj.Key
 		projectId, err = createProject(pName)
 		if err != nil {
-			fmt.Println(err)
+			return err
 		}
-		boardId, err = createBoard(proj.ID+"_"+proj.Key, "3")
+		boardId, err = createBoard(proj.ID+"_"+proj.Key, "3", "")
 		if err != nil {
-			fmt.Println(err)
 			return err
 		}
 		wg.Add(1)
@@ -147,7 +145,6 @@ func JiraImport(host string, user string, password string) error {
 
 	err = createHook(i.url, jql, projectId, boardId, i.user, i.pass)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	fmt.Println("Webhook created")
@@ -169,7 +166,7 @@ func processWithJql(jql string, i JiraImporter, wg *sync.WaitGroup) error {
 	if err != nil {
 		return err
 	}
-	boardId, err = createBoard(pName, "3")
+	boardId, err = createBoard(pName, "3", jql)
 	if err != nil {
 		return err
 	}
@@ -229,8 +226,12 @@ func createHook(host string, jql string, projectId int, boardId int, user string
 	if err != nil {
 		return err
 	}
+	bodyResp, _ := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusCreated || resp.StatusCode == http.StatusUnauthorized {
+		return errors.New("Error creating Jira Hook: " + string(bodyResp) + " " + string(payloadBytes))
+	}
 	return nil
 }
 
@@ -265,8 +266,8 @@ func createProject(name string) (int, error) {
 	return projectData.Project.Id, nil
 }
 
-func createBoard(boardId string, boardType string) (int, error) {
-	q, err := url.ParseQuery("parameters[projectId]=" + strconv.Itoa(projectData.Project.Id) + "&parameters[boardId]=" + boardId + "&parameters[boardType]=" + boardType)
+func createBoard(boardId string, boardType string, jql string) (int, error) {
+	q, err := url.ParseQuery("parameters[projectId]=" + strconv.Itoa(projectData.Project.Id) + "&parameters[boardId]=" + boardId + "&parameters[boardType]=" + boardType + "&parameters[importQuery]=" + jql)
 	if err != nil {
 		return 0, err
 	}
@@ -381,8 +382,8 @@ func Process(i JiraImporter, jiraProjectId int, jiraProjectKey string, jql strin
 			body, _ := ioutil.ReadAll(resp.Body)
 			resp.Body.Close()
 			if resp.StatusCode != 429 {
-				fmt.Println("Failed to get issues. Resp:" + string(body))
-				continue
+				log.Errorf("Failed to get issues. Resp:" + string(body))
+				return
 			}
 			h := resp.Header.Get("X-Ratelimit-Reset")
 			t := 30 * time.Second
