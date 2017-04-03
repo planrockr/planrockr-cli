@@ -26,13 +26,13 @@ build: .GOPATH/.ok
 
 .PHONY: clean test list cover format
 
-release: build
+release: 
+	 GOOS=darwin GOARCH=amd64 make
 	 GOOS=windows GOARCH=amd64 make
 	 GOOS=linux GOARCH=amd64 make
-	 cd bin; tar -cvzf planrockr-cli-$(TAG)-darwin-10.12-amd64.tar.gz planrockr-cli
+	 cd bin/darwin_amd64; tar -cvzf planrockr-cli-$(TAG)-darwin-10.12-amd64.tar.gz planrockr-cli
 	 cd bin/linux_amd64 ; tar -cvzf planrockr-cli-$(TAG)-linux-amd64.tar.gz planrockr-cli
 	 cd bin/windows_amd64 ; tar -cvzf planrockr-cli-$(TAG)-windows-amd64.tar.gz planrockr-cli.exe
-	 
 clean:
 	$Q rm -rf bin .GOPATH
 
