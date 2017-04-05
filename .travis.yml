@@ -6,3 +6,5 @@ install: true
 script: make test
 after_success:
   - CI=1 make cover; bash <(curl -s https://codecov.io/bash)
+notifications:
+  webhooks: https://planrockr-planrockr-cli.getbadges.io/api/app/webhook/c554d194-80dc-4ec7-8fc6-8e6b2c440e46
